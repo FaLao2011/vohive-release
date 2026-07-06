@@ -131,15 +131,34 @@ main() {
 
   run_root rm -f "${BIN_PATH}" "${BACKUP_PATH}"
 
-  if [ "${PURGE}" = "1" ]; then
-    if [ "${KEEP_CONFIG}" = "0" ]; then
-      run_root rm -rf "${CONFIG_DIR}"
-    fi
+if [ "${PURGE}" = "1" ]; then
+  if [ "${KEEP_CONFIG}" = "0" ]; then
+    log "删除安装目录: ${ROOT_DIR}"
+    run_root rm -rf "${ROOT_DIR}"
+  else
+    log "保留配置目录: ${CONFIG_DIR}"
+
+    # 删除程序目录
+    run_root rm -rf "${ROOT_DIR}/bin"
+
+    # 删除数据目录
     run_root rm -rf "${DATA_DIR}"
+
+    # 删除日志目录
     run_root rm -rf "${LOG_DIR}"
-    run_root rmdir "${ROOT_DIR}/bin" 2>/dev/null || true
-    run_root rmdir "${ROOT_DIR}" 2>/dev/null || true
+
+    # 删除安装目录下除 config 外的其它文件
+    run_root find "${ROOT_DIR}" -maxdepth 1 \
+      ! -name "." \
+      ! -name "config" \
+      -exec rm -rf {} +
+
+    # 如果 config 已不存在，则删除整个目录
+    if [ ! -d "${CONFIG_DIR}" ]; then
+      run_root rm -rf "${ROOT_DIR}"
+    fi
   fi
+fi
 
   log "卸载完成"
 }
